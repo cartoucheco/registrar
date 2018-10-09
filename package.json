@@ -1,0 +1,30 @@
+{
+  "name": "cartouche-registrar",
+  "version": "1.0.0",
+  "description": "Registrar for Cartouche-managed ENS TLDs.",
+  "devDependencies": {
+    "solium": "^1.0.4",
+    "truffle": "^4.1.12",
+    "@ensdomains/ens": "^0.1.1"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "pretest": "truffle compile",
+    "test": "truffle test",
+    "watch": "npm-watch",
+    "lint": "solium --dir ./contracts",
+    "prepublishOnly": "truffle compile && truffle networks --clean"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cartoucheco/registrar.git"
+  },
+  "author": "Nick Johnson <nick@cartouche.co>",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/cartoucheco/registrar/issues"
+  },
+  "homepage": "https://github.com/cartoucheco/registrar#readme"
+}
