@@ -1,9 +1,10 @@
-pragma solidity ^0.4.20;
+pragma solidity >=0.5.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "@ensdomains/ens/contracts/ENS.sol";
 import "./RBAC.sol";
-import "./OwnerResolver.sol";
+import "./Resolver.sol";
+import "./OwnedResolver.sol";
 
 /**
  * OwnedRegistrar implements an ENS registrar that accepts registrations by a
@@ -15,7 +16,7 @@ import "./OwnerResolver.sol";
  */
 contract OwnedRegistrar is RBAC {
     ENS public ens;
-    OwnerResolver public resolver;
+    OwnedResolver public resolver;
     mapping(uint=>mapping(address=>bool)) public registrars; // Maps IANA IDs to authorised accounts
     mapping(bytes32=>uint) public nonces; // Maps namehashes to domain nonces
 
@@ -26,15 +27,15 @@ contract OwnedRegistrar is RBAC {
 
     constructor(ENS _ens) public {
         ens = _ens;
-        resolver = new OwnerResolver(_ens);
+        resolver = new OwnedResolver();
         _addRole(msg.sender, "owner");
     }
 
-    function addRole(address addr, string role) external onlyRole("owner") {
+    function addRole(address addr, string calldata role) external onlyRole("owner") {
         _addRole(addr, role);
     }
 
-    function removeRole(address addr, string role) external onlyRole("owner") {
+    function removeRole(address addr, string calldata role) external onlyRole("owner") {
         // Don't allow owners to remove themselves
         require(keccak256(abi.encode(role)) != keccak256(abi.encode("owner")) || msg.sender != addr);
         _removeRole(addr, role);
@@ -60,19 +61,21 @@ contract OwnedRegistrar is RBAC {
         require(registrars[registrarId][registrar]);
 
         ens.setSubnodeOwner(node, label, address(this));
-        if(owner == 0) {
-            ens.setResolver(subnode, 0);
+        if(owner == address(0)) {
+            ens.setResolver(subnode, address(0));
         } else {
-            ens.setResolver(subnode, resolver);
+            ens.setResolver(subnode, address(resolver));
+            resolver.setAddr(subnode, owner);
         }
         ens.setOwner(subnode, owner);
 
         emit Associate(node, label, owner);
     }
 
-    function multicall(bytes[] calls) public {
-        for(uint i = 0; i < calls.length; i++) {
-            require(address(this).delegatecall(calls[i]));
+    function multicall(bytes[] memory calls) public returns (bool) {
+        for (uint i = 0; i < calls.length; i++) {
+            (bool success, ) = address(this).delegatecall(calls[i]);
+            require(success, "One or more of the transactions failed!");
         }
     }
 }
