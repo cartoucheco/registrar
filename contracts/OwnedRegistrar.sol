@@ -52,8 +52,10 @@ contract OwnedRegistrar is RBAC {
         }
 
         address owner = oldENS.owner(node);
+        address oldResolver = oldENS.resolver(node);
+
         ens.setSubnodeOwner(baseNode, bytes32(labelHash), address(this));
-        ens.setResolver(node, oldENS.resolver(node));
+        ens.setResolver(node, oldResolver);
         ens.setOwner(node, owner);
     }
 
