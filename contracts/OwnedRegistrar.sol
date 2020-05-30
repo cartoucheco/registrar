@@ -5,16 +5,6 @@ import "@ensdomains/ens/contracts/ENS.sol";
 import "./RBAC.sol";
 import "@ensdomains/resolver/contracts/Resolver.sol";
 
-interface OldENS {
-    function setSubnodeOwner(bytes32 node, bytes32 label, address owner) external;
-    function setResolver(bytes32 node, address resolver) external;
-    function setOwner(bytes32 node, address owner) external;
-    function setTTL(bytes32 node, uint64 ttl) external;
-    function owner(bytes32 node) external view returns (address);
-    function resolver(bytes32 node) external view returns (address);
-    function ttl(bytes32 node) external view returns (uint64);
-}
-
 /**
  * OwnedRegistrar implements an ENS registrar that accepts registrations by a
  * list of approved parties (IANA registrars). Registrations must be submitted
@@ -28,7 +18,7 @@ interface OldENS {
  */
 contract OwnedRegistrar is RBAC {
     ENS public ens;
-    OldENS public oldENS;
+    ENS public oldENS;
     address public resolver;
     bytes32 public baseNode;
     mapping(uint=>mapping(address=>bool)) public registrars; // Maps IANA IDs to authorised accounts
@@ -38,9 +28,9 @@ contract OwnedRegistrar is RBAC {
     event RegistrarRemoved(uint id, address registrar);
     event Associate(bytes32 indexed node, bytes32 indexed subnode, address indexed owner);
     event Disassociate(bytes32 indexed node, bytes32 indexed subnode);
-    event ResolverReset(address newResolver);
+    event ResolverSetted(address newResolver);
 
-    constructor(ENS _ens, address _resolver, OldENS _oldENS, bytes32 _baseNode) public {
+    constructor(ENS _ens, address _resolver, ENS _oldENS, bytes32 _baseNode) public {
         ens = _ens;
         resolver = _resolver;
         oldENS = _oldENS;
@@ -50,22 +40,24 @@ contract OwnedRegistrar is RBAC {
     }
 
     /**
-     * @dev Migrate a name from the previous ENSRegistry and update its resolver.
+     * @dev Migrate a name from the previous ENSRegistry.
      * @param labelHash The hash of the label specifying the subnode.
      */
 
     function migrate(uint256 labelHash) public onlyRole("owner") {
         bytes32 node = keccak256(abi.encodePacked(baseNode, bytes32(labelHash)));
+
+        if(ens.owner(node) != address(0x0)) {
+            return;
+        }
+
         address owner = oldENS.owner(node);
-        ens.setSubnodeOwner(baseNode, bytes32(labelHash), address(this));
-        ens.setResolver(node, resolver);
-        Resolver(resolver).setAddr(node, owner);
-        ens.setOwner(node, owner);
+        ens.setSubnodeOwner(baseNode, bytes32(labelHash), owner);
     }
 
-    function migrateAll(uint256[] calldata labelHashs) external onlyRole("owner") {
-        for(uint i = 0; i < labelHashs.length; i++) {
-            migrate(labelHashs[i]);
+    function migrateAll(uint256[] calldata labelHashes) external {
+        for(uint i = 0; i < labelHashes.length; i++) {
+            migrate(labelHashes[i]);
         }
     }
 
@@ -93,9 +85,9 @@ contract OwnedRegistrar is RBAC {
         return resolver;
     }
 
-    function resetResolver(address newResolver) public onlyRole("owner") {
+    function setResolver(address newResolver) public onlyRole("owner") {
         resolver = newResolver;
-        emit ResolverReset(newResolver);
+        emit ResolverSetted(newResolver);
     }
 
     function associateWithSig(bytes32 node, bytes32 label, address owner, uint nonce, uint registrarId, bytes32 r, bytes32 s, uint8 v) public onlyRole("transactor") {
@@ -108,8 +100,8 @@ contract OwnedRegistrar is RBAC {
         require(registrars[registrarId][registrar]);
 
         ens.setSubnodeOwner(node, label, address(this));
-        if(owner == address(0)) {
-            ens.setResolver(subnode, address(0));
+        if(owner == address(0x0)) {
+            ens.setResolver(subnode, address(0x0));
         } else {
             ens.setResolver(subnode, resolver);
             Resolver(resolver).setAddr(subnode, owner);
