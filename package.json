@@ -1,7 +1,7 @@
 {
-  "name": "luxe-registrar",
+  "name": "cartouche-registrar",
   "version": "1.0.0",
-  "description": "LUXE registrar with multi chain resolver.",
+  "description": "Registrar for Cartouche-managed ENS TLDs.",
   "main": "truffle-config.js",
   "directories": {
     "test": "test"
