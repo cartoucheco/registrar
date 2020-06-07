@@ -14,7 +14,7 @@ import "@ensdomains/resolver/contracts/Resolver.sol";
  * An audit of this code is available here: https://hackmd.io/s/SJcPchO57
  *
  * The default resolver for users is alterable in this version, but only the
- * "owner" can reset it.
+ * "owner" can set it.
  */
 contract OwnedRegistrar is RBAC {
     ENS public ens;
@@ -28,7 +28,7 @@ contract OwnedRegistrar is RBAC {
     event RegistrarRemoved(uint id, address registrar);
     event Associate(bytes32 indexed node, bytes32 indexed subnode, address indexed owner);
     event Disassociate(bytes32 indexed node, bytes32 indexed subnode);
-    event ResolverSetted(address newResolver);
+    event ResolverSet(address newResolver);
 
     constructor(ENS _ens, address _resolver, ENS _oldENS, bytes32 _baseNode) public {
         ens = _ens;
@@ -53,10 +53,7 @@ contract OwnedRegistrar is RBAC {
 
         address owner = oldENS.owner(node);
         address oldResolver = oldENS.resolver(node);
-
-        ens.setSubnodeOwner(baseNode, bytes32(labelHash), address(this));
-        ens.setResolver(node, oldResolver);
-        ens.setOwner(node, owner);
+        ens.setSubnodeRecord(baseNode, bytes32(labelHash), owner, oldResolver, 0);
     }
 
     function migrateAll(uint256[] calldata labelHashes) external {
@@ -91,7 +88,7 @@ contract OwnedRegistrar is RBAC {
 
     function setResolver(address newResolver) public onlyRole("owner") {
         resolver = newResolver;
-        emit ResolverSetted(newResolver);
+        emit ResolverSet(newResolver);
     }
 
     function associateWithSig(bytes32 node, bytes32 label, address owner, uint nonce, uint registrarId, bytes32 r, bytes32 s, uint8 v) public onlyRole("transactor") {
