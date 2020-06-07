@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "./Roles.sol";
 
@@ -26,7 +26,7 @@ contract RBAC {
    * @param _role the name of the role
    * // reverts
    */
-  function checkRole(address _operator, string _role)
+  function checkRole(address _operator, string memory _role)
     public
     view
   {
@@ -39,7 +39,7 @@ contract RBAC {
    * @param _role the name of the role
    * @return bool
    */
-  function hasRole(address _operator, string _role)
+  function hasRole(address _operator, string memory _role)
     public
     view
     returns (bool)
@@ -52,7 +52,7 @@ contract RBAC {
    * @param _operator address
    * @param _role the name of the role
    */
-  function _addRole(address _operator, string _role)
+  function _addRole(address _operator, string memory _role)
     internal
   {
     roles[_role].add(_operator);
@@ -64,7 +64,7 @@ contract RBAC {
    * @param _operator address
    * @param _role the name of the role
    */
-  function _removeRole(address _operator, string _role)
+  function _removeRole(address _operator, string memory _role)
     internal
   {
     roles[_role].remove(_operator);
@@ -76,7 +76,7 @@ contract RBAC {
    * @param _role the name of the role
    * // reverts
    */
-  modifier onlyRole(string _role)
+  modifier onlyRole(string memory _role)
   {
     checkRole(msg.sender, _role);
     _;
