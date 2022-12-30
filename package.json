@@ -9,7 +9,7 @@
   "dependencies": {
     "@ensdomains/buffer": "0.0.10",
     "@ensdomains/dnssec-oracle": "^0.1.0",
-    "@ensdomains/ens": "^0.4.4",
+    "@ensdomains/ens": "^0.4.5",
     "@ensdomains/resolver": "^0.2.4",
     "openzeppelin-solidity": "^2.5.0",
     "truffle": "^5.1.17",
